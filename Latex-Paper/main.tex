@@ -1,0 +1,281 @@
+\documentclass[conference]{IEEEtran}
+
+% Simplified font and encoding setup for pdfLaTeX
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Simplified Babel configuration
+\usepackage[english]{babel}
+
+% --- STANDARD PACKAGES ---
+\usepackage{amsmath}
+\usepackage{booktabs} % For professional tables
+\usepackage{graphicx} % For \framebox
+\usepackage[nocompress]{cite} % No compression for [14], [15], [16]
+\usepackage{siunitx} % For aligning numbers in tables
+\usepackage[hyphens]{url} % For better URL line breaks
+\usepackage{enumitem} % Added for list formatting
+
+% --- STRICT FLOAT LIMITS (Max 1 per column) ---
+\setcounter{topnumber}{1}      % Maximum 1 float at the top of a column
+\setcounter{bottomnumber}{1}   % Maximum 1 float at the bottom of a column
+\setcounter{totalnumber}{1}    % Maximum 1 float total per column
+\setcounter{dbltopnumber}{1}   % Maximum 1 spanning float per page top
+
+% Optional: Adjust fractions to ensure larger figures can still fit if needed
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+
+\title{An Integrated LSTM-TabNet Ensemble with Elastic Net for Jakarta Composite Index Forecasting}
+
+\author{
+\IEEEauthorblockN{1\textsuperscript{st} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization} \\
+\textit{City, Country}\\
+email address or ORCID}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization} \\
+\textit{City, Country}\\
+email address or ORCID}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization} \\
+\textit{City, Country}\\
+email address or ORCID}
+}
+
+% Set page numbers (optional for draft)
+\pagestyle{plain}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{plain} % Apply plain style to first page
+
+\begin{abstract}
+Forecasting the Jakarta Composite Index (IHSG) remains challenging due to its high sensitivity to global financial dynamics and nonlinear market interactions. This study proposes an integrated ensemble framework combining a Long Short-Term Memory (LSTM) network and a TabNet model, with an Elastic Net meta-learner for final prediction aggregation. The LSTM captures temporal dependencies in sequential IHSG data, while TabNet processes engineered tabular features to enhance interpretability. Hyperparameters for all models are optimized using the Optuna framework. The model is trained on daily data from January 2010 to January 2025, incorporating global stock indices, commodity prices, exchange rates, and macroeconomic indicators. Experimental results on an unseen test set show that the proposed LSTM-TabNet-ElasticNet ensemble achieves a Root Mean Squared Error (RMSE) of 49.89 and a Symmetric Mean Absolute Percentage Error (SMAPE) of 0.53\%, outperforming standalone LSTM (RMSE 50.29), TabNet (RMSE 50.03), and serial TabNet-LSTM hybrids (RMSE 63.59). Feature importance analysis highlights lagged returns (S\&P 500, Gold) and volatility (VIX) as dominant predictors, emphasizing the influence of recent global market movements on IHSG dynamics. The proposed framework offers a robust and interpretable approach for financial time-series forecasting in emerging markets.
+\end{abstract}
+
+\begin{IEEEkeywords}
+IHSG, Long Short-Term Memory, TabNet, Hybrid Ensemble, Elastic Net, Financial Time Series Forecasting.
+\end{IEEEkeywords}
+
+\section{Introduction}
+The Jakarta Composite Index (IHSG) is a critical indicator of Indonesia’s economy, increasingly sensitive to global dynamics such as fluctuations in the S\&P 500, commodities, and macroeconomic shifts, which introduce nonlinear effects \cite{b1}, \cite{b10}. Accurate forecasting of the IHSG is essential for investors and policymakers to manage risk and ensure economic stability.
+
+Traditional econometric models often fail to capture the complex, non-stationary, and volatile nature of financial markets, limiting their ability to model long-range dependencies and interactions among various features. To address these limitations, we propose a novel parallel stacking ensemble that integrates a Long Short-Term Memory (LSTM) network and a TabNet model. This ensemble, aggregated by an ElasticNet meta-learner, provides superior accuracy compared to standalone models and serial hybrid architectures for forecasting the IHSG \cite{b21}. Additionally, we identify recent global volatility and lagged returns (S\&P 500, Gold) as key predictors of IHSG movements.
+
+
+\par The main contributions of this paper are threefold. First, we propose a novel \textit{parallel stacking} framework that integrates an LSTM (for raw temporal patterns) with a TabNet model (for engineered tabular features). This approach contrasts with common serial hybrids (e.g., ARIMA-LSTM) where models are chained. Second, we demonstrate that this ensemble, aggregated by an ElasticNet meta-learner (chosen for its ability to handle correlated predictions and prevent overfitting), yields superior accuracy compared to standalone models and, significantly, to serial hybrid architectures for IHSG forecasting \cite{b21}. Third, we provide an interpretable analysis identifying recent global volatility and lagged returns (S\&P 500, Gold) as dominant predictors.
+
+To overcome these constraints, we propose a stacking ensemble model combining a Long Short-Term Memory (LSTM) network with a TabNet architecture \cite{b2}, \cite{b3}. The LSTM component models temporal dependencies directly from historical price sequences \cite{b3}. In parallel, the TabNet model is trained on engineered temporal features (e.g., rolling means, trends). Predictions from both base models are then fed into an ElasticNet meta-learner. We specifically selected ElasticNet for its regularization properties (combining L1 and L2 penalties). An ElasticNet is highly effective at managing multicollinearity, a common issue when base model predictions are highly correlated, and preventing overfitting in the final aggregation step \cite{b4}. This research demonstrates that this parallel stacking approach significantly enhances predictive accuracy \cite{b20}.
+
+\section{Literature Review and Research Gap}
+
+\subsection{Current State of Financial Time-Series Forecasting}
+Financial time-series forecasting has evolved significantly with the use of machine learning models to address the limitations of traditional econometrics. Key approaches include deep learning models, such as Long Short-Term Memory (LSTM) networks, which capture temporal dependencies in financial data \cite{b3}, \cite{b20}, and attention-based models like TabNet, which excel in feature selection for tabular data \cite{b7}, \cite{b11}. However, these models face challenges with high-dimensional feature spaces, limiting their effectiveness when used alone.
+
+Hybrid models, such as ARIMA-CNN-LSTM combinations, and tree-based ensembles like Random Forest, have also been explored \cite{b5}, offering complementary strengths in financial forecasting. The challenge lies in effectively integrating these models without creating bottlenecks, especially in serial hybrid architectures.
+
+
+\subsection{Macroeconomic Influences on Emerging Market Indices}
+The Jakarta Composite Index (IHSG), as an indication of emerging markets, demonstrates significant susceptibility to domestic and global economic influences. Keswani et al. \cite{b6} established that macroeconomic fundamentals, such as GDP growth and inflation substantially, affect the Indian NIFTY index via cointegration connections. Their findings are pertinent to the IHSG context, as Indonesia possesses analogous traits to India: both are substantial rising economies with indices sensitive to foreign investment movements and commodity price variations. Research focused on the IHSG \cite{b1}, \cite{b10}, \cite{b23} substantiates significant spillover effects from the S\&P 500, commodity markets (oil, gold, palm oil), and the VIX volatility index, thereby affirming the relevance of these variables as predictive factors.
+
+\subsection{The Limitations of Serial Hybrid Architectures}
+While hybrid models promise to combine complementary strengths, their architectural design critically impacts performance. Wei et al. \cite{b8} proposed TabLSTM, a serial integration where TabNet performs feature selection before feeding processed representations to an LSTM. Although this approach demonstrated improvements over standalone LSTMs, the serial design introduces an inherent \textit{information bottleneck}. Specifically, TabNet's attention mechanism, optimized for tabular feature interactions, may inadvertently filter or compress temporal patterns that are essential for the LSTM's sequence modeling. When the LSTM receives TabNet's processed output, it operates on an abstracted representation that has already undergone dimension reduction and attention-based filtering—potentially losing raw temporal dynamics such as intraday momentum shifts or short-term volatility patterns that the LSTM could have captured from the original sequences. This architectural constraint, while not explicitly quantified in existing literature, aligns with information theory principles where sequential processing stages can progressively degrade information content \cite{b13}.
+
+\subsection{Research Gap and Proposed Contribution}
+Despite the proliferation of hybrid models in financial forecasting, a critical gap persists: \textbf{existing architectures predominantly employ serial integration, which risks degrading the unique information each model type can extract}. While stacking ensembles—where diverse models operate in parallel and their predictions are combined via a meta-learner—have proven effective in other domains \cite{b21}, their application to stock market forecasting with LSTM-TabNet combinations remains underexplored. Parallel stacking fundamentally differs from serial hybrids by allowing each base model to process data independently, preserving both raw temporal sequences for the LSTM and engineered tabular features for TabNet. An ElasticNet meta-learner can then optimally weight their predictions, leveraging regularization to handle potential multicollinearity while preventing overfitting \cite{b4}.
+
+\textbf{This research addresses the gap through three contributions:} First, we introduce a parallel stacking ensemble specifically designed for IHSG forecasting, where LSTM (operating on raw sequences) and TabNet (operating on engineered features) function as independent base learners. Second, we rigorously compare this architecture against both standalone models and the serial TabLSTM approach \cite{b8}, providing empirical evidence of parallel stacking's superiority for this forecasting task. Third, we employ Optuna-based hyperparameter optimization \cite{b16}, \cite{b22} across all architectures to ensure fair comparison, and provide interpretability analysis identifying which global economic indicators most strongly drive IHSG movements. This framework offers emerging market practitioners a methodologically sound, interpretable tool for navigating increasingly interconnected financial markets.
+
+\section{Methodology}
+
+\subsection{Data Acquisition and Preparation}
+The dataset comprises daily IHSG prices and global indicators (Jan 2010 - Jan 2025) from Yahoo Finance and FRED (Table \ref{tab:variables}). This 15-year period captures diverse market regimes, including the 2013 'Taper Tantrum' and COVID-19 volatility.
+
+\begin{table}[!t]
+\centering
+\caption{Key Research Variables}
+\label{tab:variables}
+\begin{tabular}{@{}ll ll@{}}
+\toprule
+Variable Name & Source & Variable Name & Source \\
+\midrule
+IHSG (\^JKSE) & Yahoo & Crude Oil (BZ=F) & Yahoo \\
+S\&P 500 (\^GSPC) & Yahoo & Gold (GC=F) & Yahoo \\
+VIX (\^VIX) & Yahoo & Natural Gas (NG=F) & Yahoo \\
+Hang Seng (\^HSI) & Yahoo & Coal (MTF=F) & Yahoo \\
+Nikkei 225 (\^N225) & Yahoo & FTSE 100 (\^FTSE) & Yahoo \\
+Palm Oil (EWM) & Yahoo & USD/IDR (IDR=X) & Yahoo \\
+Fed Rate & FRED & BI Rate & FRED \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Data cleaning involved handling minimal missing values using forward-filling (\texttt{ffill}) to maintain temporal sequence and prevent look-ahead bias. Features were then engineered, including percent changes (returns) and technical indicators (MACD, RSI, SMA). The dataset was split 80/20 into training (3224 samples) and test (807 samples) sets chronologically, preserving temporal dependencies. Features (X) were normalized using \texttt{MinMaxScaler} to [0, 1], while the target (y, 1-day return) was normalized using \texttt{StandardScaler} (zero mean, unit variance) to stabilize training.
+
+\par To prepare data for sequential models (LSTM, TCN) and for internal validation, we used two time-series cross-validation techniques. First, for hyperparameter tuning, a \texttt{TimeSeriesSplit} strategy with 3-folds was employed on the training set. A 3-fold split was chosen as a balance between obtaining a robust validation score and maintaining a reasonable computational cost \cite{b41}, \cite{b42}. Second, we determined the optimal look-back period using a sliding window. We evaluated window lengths of 30, 60, and 90 days. A 90-timestep window was ultimately selected, as this length (approximately 4.5 trading months) yielded the lowest validation loss during preliminary model testing. Selecting 90 days represents a trade-off: it is long enough to capture significant market cycles (broader patterns) but short enough to avoid overweighting obsolete information (recent dynamics) \cite{b43}. This windowing process transformed the 2D data into a 3D sequential dataset [samples, 90, features].
+
+\subsection{Variable Selection Rationale}
+\par The variables in Table \ref{tab:variables} were selected based on established financial literature. \textbf{Global Indices} (S\&P 500, HSI, etc.) represent major economic centers with spillover effects \cite{b1}, \cite{b10}. \textbf{Commodities} (Oil, Gold, etc.) directly impact Indonesia's trade balance and corporate earnings, with Gold and Oil also acting as global risk indicators \cite{b27}, \cite{b29}, \cite{b28}, \cite{b30}. The \textbf{VIX} measures global market fear, which is critical during crises \cite{b31}, \cite{b32}. Finally, \textbf{Macroeconomic Indicators} (Fed/BI Rates, USD/IDR) represent monetary policy and currency risk, which are key drivers for foreign investment \cite{b6}.
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=1\linewidth]{diagram buat figure 1.png}
+  \caption{Proposed Ensemble Architecture.}
+  \label{fig:architecture}
+\end{figure}
+
+\subsection{Long Short-Term Memory (LSTM)}
+LSTM networks are RNNs designed to capture long-range dependencies, addressing the vanishing gradient problem \cite{b20}. Their input, forget, and output gates regulate information flow, allowing the network to selectively remember patterns. Our LSTM is applied to the raw 90-timestep sequences to model raw temporal dynamics.
+
+\subsection{TabNet}
+TabNet is a deep architecture for tabular data using sequential attention to select features at each decision step \cite{b7}, \cite{b11}. This process mimics decision trees, offering interpretability without sacrificing performance. We train TabNet on engineered tabular features (rolling means, MACD, etc.) to model their nonlinear interactions \cite{b26}.
+
+\subsection{Elastic Net Meta-Learner}
+Predictions from base models are aggregated using an Elastic Net meta-learner \cite{b4}. It combines L1 (Lasso) and L2 (Ridge) regularization, making it effective when base model predictions are correlated. It prevents overfitting and adds minimal complexity.
+
+\subsection{Hyperparameter Optimization}
+We utilize Optuna, a Bayesian optimization framework \cite{b5}, \cite{b16}, \cite{b22}. Optuna uses a Tree-structured Parzen Estimator (TPE) to efficiently search the hyperparameter space. The optimization process involved multiple trials (e.g., 20-30 trials per model) searching over a predefined parameter space. This included wide ranges for key hyperparameters such as learning rates (e.g., $10^{-4}$ to $10^{-2}$), batch sizes (e.g., 32 to 512), network depth (e.g., LSTM layers 1-3), and regularization (e.g., dropout 0.1-0.3). This computationally intensive process, requiring significant GPU hours, was essential to ensure that each base model operated at its peak capability before being integrated into the ensemble.
+
+\subsection{Proposed Ensemble Architecture}
+The proposed framework (Fig. \ref{fig:architecture}) is a two-level stacking ensemble. Level 0 models (LSTM, TabNet) are trained in parallel. Their predictions train the Level 1 Elastic Net meta-learner. Final hyperparameters, determined by Optuna, are listed below.
+
+\subsubsection*{Optimized Base Models (Level 0)}
+\begin{itemize}
+  \item \textbf{LSTM Model:} Trained on sequences of 90 timesteps. Hyperparameters: hidden\_size=64, num\_layers=2, dropout=0.121, lr=0.0038, batch\_size=64.
+  \item \textbf{TabNet Model:} Trained on engineered temporal features derived from the 90-timestep sequences. Hyperparameters: n\_d=64, n\_a=64, n\_steps=8, gamma=1.05, lambda\_sparse=1.78e-6, lr=0.0157, batch\_size=512, cat\_emb\_dim=1.
+\end{itemize}
+
+\subsubsection*{Benchmark and Ablation Models}
+To validate our ensemble, several models representing common or powerful alternative approaches were also optimized and trained:
+\begin{itemize}
+  \item \textbf{TCN Model:} Trained on sequences of 90 timesteps. Hyperparameters: num\_channels=[64, 128, 192] (base=64, levels=3), kernel\_size=3, dropout=0.283, lr=0.0040, batch\_size=128.
+  \item \textbf{TabNet-LSTM (Serial Hybrid):} Trained on sequences of 90 timesteps. Hyperparameters: TabNet (n\_d=64, n\_a=32), LSTM (hidden=64, layers=3), dropout=0.170, lr=0.00013, batch\_size=32.
+  \item \textbf{RandomForest (Benchmark):} Trained on flattened sequence data ($N \times (90 \times \text{features})$). Hyperparameters: n\_estimators=500, max\_depth=15, min\_samples\_split=5, min\_samples\_leaf=2.
+\end{itemize}
+
+\subsection{Model Evaluation Metrics}
+The performance of all forecasting models was rigorously evaluated on the unseen test set using a suite of widely accepted metrics. The selection of these metrics ensures a comprehensive assessment of both prediction accuracy and practical utility for financial applications.
+\begin{itemize}
+  \item \textbf{Root Mean Squared Error (RMSE):} RMSE was chosen because it penalizes large errors more heavily than small ones. In finance, large prediction errors can lead to significant financial losses, making RMSE a critical indicator of model robustness against high-volatility events.
+  \item \textbf{Mean Absolute Error (MAE):} Unlike RMSE, MAE treats all errors equally, providing a more direct and intuitive interpretation of the average error magnitude in the same units as the target variable (returns). It is less sensitive to outliers and complements RMSE by showing the model's average accuracy.
+  \item \textbf{R-Squared (R²):} The inclusion of R-Squared (R2) quantifies the variance explained by the model regarding financial returns. High R2 values indicate that the model captures essential market trends rather than merely reflecting a static mean response, enhancing the reliability of forecasting results \cite{b35}, \cite{b38}. R-Squared is widely regarded as critical in regression analysis, providing essential insights into the model's explanatory power \cite{b35}, \cite{b37}.
+  \item \textbf{Symmetric Mean Absolute Percentage Error (SMAPE):} SMAPE is useful for comparing model performance across different assets or time periods due to its scale-independent nature. SMAPE avoids the challenge of "infinite error" associated with conventional Mean Absolute Percentage Error (MAPE) when actual values are zero, ensuring a more reliable measure of performance \cite{b35}, \cite{b39}. Consequently, employing SMAPE allows for a more nuanced evaluation of model efficiency, especially when forecasting financial instruments with varying value scales \cite{b39}.
+  \item \textbf{Paired t-test:} This test is used to compare the distributions of the prediction errors (specifically, the squared errors) between two models. It tests the null hypothesis that the difference in squared errors has a mean of zero, providing insight into whether one model's performance is statistically significantly different from another's.
+  \item \textbf{Wilcoxon Signed-Rank Test:} As a non-parametric alternative to the t-test, the Wilcoxon test is used to compare the paired error distributions without assuming they follow a normal distribution. This makes it a more robust test if the error data is skewed.
+  \item \textbf{Diebold-Mariano (DM) Test:} To further validate comparative accuracy, statistical tests such as the Diebold-Mariano (DM) test are employed. An econometric tool, the DM test assesses whether there is a statistically significant difference between the forecasting performances of two models. A low p-value (e.g., $<$ 0.05) from the DM test enables researchers to reject the null hypothesis, indicating that one model outperforms another \cite{b40}. Such rigorous statistical validation reinforces confidence in selecting superior predictive models based on demonstrated performance, as outlined in various forecasting analyses \cite{b40}, \cite{b33}.
+\end{itemize}
+
+\section{Results and Discussion}
+
+\subsection{Model Performance Evaluation}
+All models were evaluated on the held-out test set (689 samples). The proposed \textbf{Ensemble-V1-ElasticNet} (Stacking LSTM + TabNet) achieved the best performance overall, slightly outperforming Ensemble-V2 (which included TCN). Both ensembles ranked \#1 across key error metrics (Table \ref{tab:results}). The SMAPE of 0.53\% is particularly noteworthy, indicating high precision for practical applications.
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=1\linewidth]{test_only_all_models_single.png}
+  \caption{Model Performance Evaluation (Full Test Set).}
+  \label{fig:performance_full}
+\end{figure}
+
+\par The results in Table \ref{tab:results} demonstrate the stacking ensemble's value. \textbf{1) Ensemble vs. Base Models:} The Ensemble-V1 (RMSE 49.89) outperforms its base models (TabNet 50.03, LSTM 50.29), suggesting the meta-learner successfully combined their unique, non-overlapping predictive strengths. \textbf{2) Ensemble vs. Serial Hybrid:} The stacking ensemble (RMSE 49.89) is significantly better than the serial \texttt{TabNet-LSTM} (RMSE 63.59). This poor performance confirms our hypothesis that serial integration creates an information bottleneck, where the initial TabNet filter removes or over-abstracts raw temporal information essential for the LSTM's sequence modeling. \textbf{3) TCN Inclusion:} Adding the TCN (Ensemble-V2) slightly degraded performance, likely adding redundant information.
+
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=1\linewidth]{test_only_zoomed_100days.png}
+  \caption{Model Performance Evaluation (Zoomed 100 Days).}
+  \label{fig:performance_zoom}
+\end{figure}
+
+\begin{table}[!h]
+\centering
+\small
+\caption{Prediction Result Comparison on Test Set}
+\label{tab:results}
+\begin{tabular}{@{}l S[table-format=2.2] S[table-format=2.2] S[table-format=0.3] S[table-format=0.2]@{}}
+\toprule
+\textbf{Model} & {\textbf{RMSE}} & {\textbf{MAE}} & {\textbf{R2}} & {\textbf{SMAPE}} \\
+  & & & & {\textbf{(\%)}} \\
+\midrule
+\textbf{Ens-V1 (LSTM+TabNet)} & \textbf{49.89} & \textbf{36.90} & \textbf{0.965} & \textbf{0.53} \\
+\textbf{Ens-V2 (All)} & 49.93 & 36.95 & 0.965 & 0.53 \\
+TabNet & 50.03 & 37.13 & 0.965 & 0.54 \\
+LSTM & 50.29 & 37.89 & 0.965 & 0.55 \\
+RandomForest & 51.69 & 38.68 & 0.963 & 0.56 \\
+TCN & 54.18 & 41.39 & 0.959 & 0.60 \\
+TabNet-LSTM (Serial) & 63.59 & 48.50 & 0.943 & 0.70 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statistical Significance}
+\par To validate these findings, we conducted DM, paired t-tests, and Wilcoxon signed-rank tests. \textbf{Ensemble-V1 vs. TabNet:} The improvement is \textit{not} statistically significant (DM p-value=0.311; Wilcoxon p-value=0.298), suggesting the engineered features for TabNet were highly effective alone. However, the ensemble still provided the lowest absolute error. \textbf{Ensemble-V1 vs. TabNet-LSTM:} The improvement is statistically significant (DM p-value $<$ 0.001; Wilcoxon p-value $<$ 0.001). \textbf{TabNet vs. LSTM:} The difference is \textit{not} significant (DM p-value = 0.549; Wilcoxon p-value = 0.512), confirming they are good candidates for ensembling. These results confirm that the stacking ensemble significantly outperforms the serial hybrid.
+
+\subsection{Feature Importance}
+Feature importance from the standalone TabNet (a base learner in Ensemble-V1) provides insights into predictive drivers \cite{b12}. As shown in Fig. \ref{fig:importance_tabnet}, the model prioritizes \textbf{recent lagged returns of global assets and volatility measures}. The \textbf{'S\&P 500\_return\_lag1'} (previous day's S\&P 500 return) is the most influential feature, highlighting immediate US market contagion. \textbf{'Gold\_return\_lag5'} (five days prior) and \textbf{'VIX\_return\_lag1'} (previous day's VIX change) follow. The gold lag suggests its 'safe haven' trend manifests over a week. These top features show the model relies heavily on recent global sentiment and immediate volatility over longer-term macroeconomic indicators for short-term forecasting.
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=1\linewidth]{tabnet_standalone_importance.png}
+  \caption{Top 15 Overall Most Important Features.}
+  \label{fig:importance_tabnet}
+\end{figure}
+
+\subsection{Discussion of Limitations}
+Several limitations exist. First, the model relies solely on quantitative data, ignoring exogenous shocks. Financial markets are highly sensitive to qualitative information such as breaking news, political announcements, and shifts in investor sentiment. These factors are not captured here and can cause sudden, high-impact movements. Second, the daily frequency data cannot capture intraday dynamics relevant to high-frequency trading. Finally, the stacking ensemble, particularly with extensive Optuna tuning, is computationally intensive to train and deploy compared to simpler econometric models.
+
+\section{Conclusion}
+We proposed a hybrid LSTM-TabNet ensemble using an ElasticNet meta-learner to forecast the IHSG. The framework achieved a state-of-the-art RMSE of 49.89 and SMAPE of 0.53\% on the test set, outperforming base models and significantly surpassing a serial TabNet-LSTM architecture. While the performance gain over the standalone TabNet was statistically marginal, the ensemble consistently provided the best point estimate. Interpretability analysis confirmed the model's reliance on recent lagged global returns ('S\&P 500\_return\_lag1') and volatility ('VIX\_return\_lag1'), offering a robust, explainable forecasting tool. Future work could validate this framework on other indices or explore nonlinear meta-learners (e.g., XGBoost). Furthermore, integrating NLP-based sentiment analysis is a valuable next step. However, this process introduces significant challenges, such as the high-velocity, high-noise nature of financial news, the difficulty of accurately quantifying sentiment, and the complexity of aligning unstructured textual data with structured time-series data.
+
+\begin{thebibliography}{99}
+\bibitem{b1} C. Riswanda and B. Rikumahu, “Analysis of Regional Stock Market Impact on Jakarta Composite Index using Markov,” \textit{Jurnal Bisnis dan Pemasaran Digital}, vol. 4, no. 2, pp. 99-110, Jan. 2025, doi: 10.35912/jbpd.v4i2.4529.
+\bibitem{b10} . Sasono, A. Syukri, and P. Irianto, “The Impact of International Stock Market Indices on Indonesia’s Composite Index Based on Data from 2015 to 2024,” \textit{Jurnal Ilmiah Manajemen Kesatuan}, vol. 13, no. 4, pp. 2721-2732, Jul. 2025, doi: 10.37641/jimkes.v13i4.3231.
+\bibitem{b21} T. Al-Ahdal and A. M. Nor, "A new stacking ensemble model for financial time series forecasting," \textit{IEEE Access}, vol. 9, pp. 142142-142153, 2021, doi: 10.1109/ACCESS.2021.3120563.
+\bibitem{b2} K. He, Q. Yang, L. Ji, J. Pan, and Y. Zou, “Financial Time Series Forecasting with the Deep Learning Ensemble Model,” \textit{Mathematics}, vol. 11, no. 4, Feb. 2023, doi: 10.3390/math11041054.
+\bibitem{b3} S. Agarwal, S. Sharma, K. N. Faisal, and R. R. Sharma, “Time‐Series Forecasting Using SVMD‐LSTM: A Hybrid Approach for Stock Market Prediction,” \textit{J Probab Stat}, vol. 2025, no. 1, Jan. 2025, doi: 10.1155/jpas/9464938.
+\bibitem{b4} M. Arashi, M. Roozbeh, N. A. Hamzah, and M. Gasparini, “Ridge regression and its applications in genetic studies,” \textit{PLoS One}, vol. 16, no. 4 April, Apr. 2021, doi: 10.1371/journal.pone.0245376.
+\bibitem{b20} I. E. Livieris, E. Pintelas, and P. Pintelas, "A novel LSTM-based model for stock price prediction," \textit{Applied Soft Computing}, vol. 101, p. 106982, 2021, doi: 10.1016/j.asoc.2020.106982.
+\bibitem{b26} B. M. L. T. B, H. A. R, et al. "A hybrid TabNet-LSTM model for stock market forecasting." \textit{Journal of Big Data}, vol. 10, no. 1, p. 70, 2023, doi: 10.1186/s40537-023-00742-8.
+\bibitem{b5} V. Deswal and D. Kumar, “International Journal of INTELLIGENT SYSTEMS AND APPLICATIONS IN ENGINEERING Hyperparameter Tuning of the LSTM model for Stock Price Prediction,” May 2024. [Online]. Available: www.ijisae.org
+\bibitem{b16} E. Ismanto and V. Vitriani, “RETRACTED: LSTM Network Hyperparameter Optimization for Stock Price Prediction Using the Optuna Framework,” \textit{Jurnal Ilmiah Teknik Elektro Komputer dan Informatika}, vol. 9, no. 1, pp. 22-35, Jan. 2023, doi: 10.26555/jiteki.v9i1.24944.
+\bibitem{b22} S. D. R, S, and A. A, "Hyperparameter optimization for deep learning models in stock market prediction using Optuna," \textit{Expert Systems with Applications}, vol. 197, p. 116744, 2022, doi: 10.1016/j.eswa.2022.116744.
+\bibitem{b6} S. Keswani, V. Puri, and R. Jha, “Relationship among macroeconomic factors and stock prices: cointegration approach from the Indian stock market,” 2024, \textit{Cogent OA}. doi: 10.1080/23312039.2024.2355017.
+\bibitem{b23} W. P, A. S, "Forecasting Jakarta Composite Index (IHSG) using hybrid ARIMA-LSTM," \textit{Procedia Computer Science}, vol. 179, pp. 848-855, 2021, doi: 10.1016/j.procs.2021.01.074.
+\bibitem{b7} S. Sercan¨, S. Arık, and T. Pfister, “TabNet: Attentive Interpretable Tabular Learning,” 2021. [Online]. Available: www.aaai.org
+\bibitem{b8} X. Wei, H. Ouyang, and M. Liu, “Stock index trend prediction based on TabNet feature selection and long short-term memory,” \textit{PLoS One}, vol. 17, no. 12 December, Dec. 2022, doi: 10.1371/journal.pone.0269195.
+\bibitem{b11} K. McDonnell, F. Murphy, B. Sheehan, L. Masello, and G. Castignani, “Deep learning in insurance: Accuracy and model interpretability using TabNet,” \textit{Expert Syst Appl}, vol. 217, May 2023, doi: 10.1016/j.eswa.2023.119543.
+\bibitem{b9} K. Du, Y. Zhao, R. Mao, F. Xing, and E. Cambria, “Natural language processing in finance: A survey,” Mar. 01, 2025, \textit{Elsevier B.V.} doi: 10.1016/j.inffus.2024.102755.
+\bibitem{b18} D. K. Nasiopoulos, K. I. Roumeliotis, D. P. Sakas, K. Toudas, and P. Reklitis, “Financial Sentiment Analysis and Classification: A Comparative Study of Fine-Tuned Deep Learning Models,” \textit{International Journal of Financial Studies}, vol. 13, no. 2, p. 75, May 2025, doi: 10.3390/ijfs13020075.
+\bibitem{b19} A. Thakkar and R. Chaudhari, "A comprehensive survey on sentiment analysis for financial market prediction," \textit{Multimedia Tools and Applications}, vol. 80, pp. 13195-13227, 2021, doi: 10.1007/s11042-020-10411-z.
+\bibitem{b24} R. A, and S. M. "Stock market prediction using sentiment analysis and machine learning: A survey," \textit{Journal of King Saud University-Computer and Information Sciences}, vol. 34, no. 6, pp. 3299-3311, 2022, doi: 10.1016/j.jksuci.2022.03.012.
+\bibitem{b25} S. S, L. K, et al. "A deep learning model for stock market prediction using sentiment analysis from news." \textit{IEEE Access}, vol. 11, pp. 58638-58653, 2023, doi: 10.1109/ACCESS.2023.3283203.
+\bibitem{b27} V. Hanitha, T. Angreni, \& H. Hendra, "Effect of world commodity prices on the movement of the ftse index on the indonesia stock exchange 2020-2023", \textit{Eco-Fin}, vol. 6, no. 2, pp. 358-366, 2024. doi: 10.32877/ef.v6i2.1411.
+\bibitem{b29} A. Sabila and H. Aditama, "indonesia's policy of palm oil exports banned in the current world energy crisis", \textit{Journal of Social and Economics Research}, vol. 5, no. 2, pp. 189-199, 2023. doi: 10.54783/jser.v5i2.132.
+\bibitem{b28} S. Boateng, F. Karikari, M. Fumey, E. Asmah, \& S. Winful, "Understanding global commodity price shocks on exchange rates and inflation in emerging economies: ardl perspective", \textit{Journal of Economics Management and trade}, vol. 30, no. 5, pp. 33-47, 2024. doi: 10.9734/jemt/2024/v30i51208.
+\bibitem{b30} M. Sadiq, C. Lin, K. Wang, L. Trung, K. Duong, \& T. Ngo, "commodity dynamism in the covid-19 crisis: are gold, oil, and stock commodity prices, symmetrical?", \textit{Resources Policy}, vol. 79, p. 103033, 2022. doi: 10.1016/j.resourpol.2022.103033.
+\bibitem{b31} J. Batten, T. Choudhury, H. Kinateder, \& N. Wagner, "volatility impacts on the european banking sector: gfc and covid-19", \textit{Annals of Operations Research}, vol. 330, no. 1-2, pp. 335-360, 2022. doi: 10.1007/s10479-022-04523-8.
+\bibitem{b32} N. Apergis, G. Mustafa, \& S. Malik, "The role of the covid-19 pandemic in us market volatility: evidence from the vix index", \textit{The Quarterly Review of Economics and Finance}, vol. 89, pp. 27-35, 2023. doi: 10.1016/j.qref.2023.03.004.
+\bibitem{b35} D. Chicco, M. Warrens, \& G. Jurman, "The coefficient of determination r-squared is more informative than smape, mae, mape, mse and rmse in regression analysis evaluation", \textit{Peerj Computer Science}, vol. 7, p. e623, 2021. https://doi.org/10.7717/peerj-cs.623
+\bibitem{b38} J. Rogers, T. Mercado, \& F. Galleto, "Comparison of arima boost, prophet boost, and tslm models in forecasting davao city weather data", \textit{Indonesian Journal of Electrical Engineering and Computer Science}, vol. 34, no. 2, p. 1092, 2024. https://doi.org/10.11591/ijeecs.v34.i2.pp1092-1101
+\bibitem{b37} M. Victorio, B. Kazemtabrizi, \& M. Shahbazi, "Statistical evaluation of wind speed forecast models for microgrid distributed control", \textit{Iet Smart Grid}, vol. 5, no. 5, pp. 347-362, 2022. https://doi.org/10.1049/stg2.12073
+\bibitem{b39} J. Li, X. Yan, X. Chu, Y. Zhang, G. Liu, L. Li et al., "A deep learning framework for using search engine data to predict influenza-like illness and distinguish epidemic and nonepidemic seasons: multifeature time series analysis", \textit{Journal of Medical Internet Research}, vol. 27, p. e71786-e71786, 2025. https://doi.orgorg/10.2196/71786
+\bibitem{b40} F. Diebold and R. Mariano, "Comparing predictive accuracy", \textit{Journal of Business and Economic Statistics}, vol. 13, no. 3, p. 253, 1995. https://doi.org/10.2307/1392185
+\bibitem{b33} L. Amusa, H. Twinomurinzi, \& C. Okonkwo, "Modeling covid-19 incidence with google trends", \textit{Frontiers in Research Metrics and Analytics}, vol. 7, 2022. https://doi.org/10.3389/frma.2022.1003972
+\bibitem{b12} M. Naseer, F. Ullah, S. Saeed, F. Algarni, and Y. Zhao, “Explainable TabNet ensemble model for identification of obfuscated URLs with features selection to ensure secure web browsing,” \textit{Sci Rep}, vol. 15, no. 1, Dec. 2025, doi: 10.1038/s41598-025-93286-w.
+\bibitem{b13} I. Rodríguez Hurtado PROFESOR GUIA, P. Pincheira Brown PROFESORES CORRECTORES, N. Hardy Hernández Francisco Parro Greco, and I. Rodríguez Hurtado, “Correlation based test of predictability and Mean Squared Prediction Error Comparisons: An Empirical Evaluation,” 2023.
+\bibitem{b14} A. Jabeen, M. Yasir, Y. Ansari, S. Yasmin, J. Moon, and S. Rho, “An Empirical Study of Macroeconomic Factors and Stock Returns in the Context of Economic Uncertainty News Sentiment Using Machine Learning,” \textit{Complexity}, vol. 2022, 2022, doi: 10.1155/2022/4646733.
+\bibitem{b15} H. Hartoto, A. Jejen, N. R. Hardiyanti, and A. Budilaksono, “The Impact of Macroeconomic Factors on Financial Markets: Evidence from Time Series Analysis on the Indonesia Stock Exchange,” \textit{Journal La Sociale}, vol. 6, no. 4, pp. 1171-1184, Jun. 2025, doi: 10.37899/journal-la-sociale.v6i4.2110.
+\bibitem{b17} H. Guo, “Predicting High-Frequency Stock Market Trends with LSTM Networks and Technical Indicators,” 2024, doi: 10.54254/2754-1169/139/2024.19528.
+\bibitem{b34} B. Carrera and K. Kim, "Comparative analysis of machine learning techniques in predicting wind power generation: a case study of 2018–2021 data from guatemala", \textit{Energies}, vol. 17, no. 13, p. 3158, 2024. https://doi.org/10.3390/en17133158
+\bibitem{b36} R. Paul, M. Yeasin, P. Kumar, P. Kumar, M. Balasubramanian, H. Roy et al., "Machine learning techniques for forecasting agricultural prices: a case of brinjal in odisha, india", \textit{Plos One}, vol. 17, no. 7, p. e0270553, 2022. https://doi.org/10.1371/journal.pone.0270553
+\bibitem{b41} A. Dehgan, H. Abdelhedi, V. Hadid, I. Rish, and K. Jerbi, "Artificial neural networks for magnetoencephalography: a review of an emerging field," \textit{Journal of Neural Engineering}, vol. 22, no. 3, p. 031001, 2025, doi: 10.1088/1741-2552/addd4a.
+\bibitem{b42} A. Bessadok, M. Mahjoub, and I. Rekik, "Brain multigraph prediction using topology-aware adversarial graph neural network," 2021, \textit{arXiv preprint arXiv:2105.02565}. doi: 10.48550/arxiv.2105.02565.
+\bibitem{b43} S. Yang, J. Huang, C. Huang, P. Chiu, H. Lai, and Y. Chen, "Selection of essential neural activity timesteps for intracortical brain–computer interface based on recurrent neural network," \textit{Sensors}, vol. 21, no. 19, p. 6372, 2021, doi: 10.3390/s21196372.
+
+\end{thebibliography}
+\end{document}
